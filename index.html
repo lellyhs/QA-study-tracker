@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>QA Study Tracker</title>
+<style>
+:root{--bg:#15110e;--panel:#211a15;--panel2:#2b221b;--line:#3d3027;--tx:#f3e9df;--mut:#b09a88;--or:#ff8a1f;--or2:#ffb066;--err:#ff6b5b}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.5 Georgia,"Times New Roman",serif}
+h1,h2,h3,button,label,.tag,.meta,nav,summary{font-family:"Trebuchet MS",Verdana,sans-serif}
+header{padding:20px 16px 8px;max-width:860px;margin:0 auto}
+h1{margin:0;font-size:1.7rem;color:var(--or)}
+header p{margin:4px 0 0;color:var(--mut)}
+nav{display:flex;gap:4px;max-width:860px;margin:12px auto 0;padding:0 16px;border-bottom:1px solid var(--line)}
+nav button{flex:1;background:none;border:0;border-bottom:3px solid transparent;color:var(--mut);padding:12px 4px;font-size:.92rem;cursor:pointer;border-radius:0}
+nav button[aria-selected=true]{color:var(--or);border-bottom-color:var(--or)}
+main{max-width:860px;margin:0 auto;padding:16px}
+section[hidden]{display:none}
+h2{font-size:1.2rem;margin:20px 0 10px;color:var(--or2)}
+h3{margin:0;font-size:1.05rem}
+.gh{margin:22px 0 8px;color:var(--or2);font-size:1rem}
+.panel,.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:12px}
+.card.due{border-color:var(--or);box-shadow:0 0 0 1px var(--or)}
+details.card{padding:12px 16px}
+summary{cursor:pointer;font-weight:700}
+details p{margin:8px 0 0;color:var(--tx)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid .full{grid-column:1/-1}
+@media(max-width:600px){.grid{grid-template-columns:1fr}}
+label{display:block;font-size:.9rem;color:var(--mut)}
+input,select,textarea{width:100%;margin-top:4px;background:var(--panel2);color:var(--tx);border:1px solid var(--line);border-radius:6px;padding:10px;font:inherit;font-size:1rem}
+textarea{min-height:90px;resize:vertical}
+input:focus,select:focus,textarea:focus,button:focus-visible,summary:focus-visible{outline:2px solid var(--or);outline-offset:1px}
+button{background:var(--or);color:#1a0f05;border:0;border-radius:6px;padding:10px 16px;font-size:.95rem;font-weight:700;cursor:pointer}
+button.ghost{background:none;color:var(--or2);border:1px solid var(--line)}
+button:disabled{opacity:.45;cursor:not-allowed}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.err{display:block;color:var(--err);font-size:.85rem;min-height:1em;margin-top:3px}
+.meta{color:var(--mut);font-size:.85rem;margin:4px 0}
+.row{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.tag{background:var(--or);color:#1a0f05;border-radius:20px;padding:2px 10px;font-size:.75rem;font-weight:700;white-space:nowrap}
+.empty{color:var(--mut)}
+.gab{border-left:3px solid var(--or);padding:4px 12px;margin-top:10px;background:var(--panel2)}
+.big{font-size:1.15rem;margin:8px 0 14px}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;padding:16px;z-index:10}
+.overlay[hidden]{display:none}
+.dlg{background:var(--panel);border:2px solid var(--or);border-radius:12px;padding:20px;max-width:440px;width:100%}
+.dlg h2{margin-top:0}
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--or);padding:10px 16px;border-radius:8px;z-index:20;max-width:90%}
+#toast[hidden]{display:none}
+</style>
+</head>
+<body>
+<header>
+  <h1>QA Study Tracker</h1>
+  <p>Plano, revisão, exercícios e consulta do conteúdo do curso.</p>
+</header>
+<nav role="tablist">
+  <button role="tab" data-t="plano" aria-selected="true">Plano</button>
+  <button role="tab" data-t="revisao" aria-selected="false">Revisão</button>
+  <button role="tab" data-t="exercicios" aria-selected="false">Exercícios</button>
+  <button role="tab" data-t="conteudo" aria-selected="false">Conteúdo</button>
+</nav>
+<main>
+<section id="plano">
+  <h2>Nova meta de estudo</h2>
+  <form id="gform" class="panel" novalidate>
+    <div class="grid">
+      <label class="full">Título
+        <input id="f-title" maxlength="80" placeholder="Ex.: Revisar valor limite">
+        <span class="err" id="e-title"></span></label>
+      <label>Assunto
+        <select id="f-module"></select></label>
+      <label>Horas de estudo por semana (1 a 20)
+        <input id="f-hours" type="number" step="1" placeholder="Ex.: 5">
+        <span class="err" id="e-hours"></span></label>
+      <label>Tipo
+        <select id="f-type"><option value="unica">Única</option><option value="recorrente">Recorrente</option></select></label>
+      <label id="l-freq" hidden>Frequência
+        <select id="f-freq"><option value="">Selecione</option><option value="diária">Diária</option><option value="semanal">Semanal</option></select>
+        <span class="err" id="e-freq"></span></label>
+      <label class="full">Data e hora
+        <input id="f-at" type="datetime-local">
+        <span class="err" id="e-at"></span></label>
+      <label class="full">Descrição
+        <textarea id="f-desc" maxlength="300" placeholder="O que você vai estudar?"></textarea></label>
+    </div>
+    <div class="btns"><button type="submit">Salvar meta</button></div>
+  </form>
+  <h2>Próximas metas</h2>
+  <div id="glist"></div>
+  <p class="meta" id="gcount"></p>
+</section>
+
+<section id="revisao" hidden>
+  <h2>Revisão em flashcards</h2>
+  <label>Assunto da revisão <select id="rgrp"></select></label>
+  <div id="rev" class="panel" style="margin-top:12px"></div>
+  <p class="meta" id="rstat"></p>
+</section>
+
+<section id="exercicios" hidden>
+  <h2>Exercícios</h2>
+  <div id="exl"></div>
+</section>
+
+<section id="conteudo" hidden>
+  <h2>Conteúdo do curso</h2>
+  <label>Buscar <input id="rq" type="search" placeholder="Ex.: k6, VADER, charter, mediana"></label>
+  <div id="rl"></div>
+</section>
+</main>
+
+<div id="modal" class="overlay" hidden>
+  <div class="dlg" role="dialog" aria-modal="true" aria-labelledby="mt">
+    <h2 id="mt"></h2>
+    <p id="md"></p>
+    <p class="meta" id="mm"></p>
+    <div class="btns" id="mb"></div>
+    <div id="mp" hidden>
+      <label>Nova data e hora <input type="datetime-local" id="mdt"></label>
+      <span class="err" id="merr"></span>
+      <div class="btns"><button id="mok">Confirmar adiamento</button></div>
+    </div>
+  </div>
+</div>
+<div id="toast" hidden></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const KEY = 'qa_study_tracker_v1';
+const MAX_POST = 3;
+let S = { goals: [], doneN: 0, ok: 0, miss: 0, ex: {} };
+try { const r = localStorage.getItem(KEY); if (r) S = Object.assign(S, JSON.parse(r)); } catch (e) {}
+
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = t => new Date(t).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { toast('Não foi possível salvar. Os dados deste navegador estão bloqueados.'); } }
+let tt;
+function toast(m) { const t = $('#toast'); t.textContent = m; t.hidden = false; clearTimeout(tt); tt = setTimeout(() => t.hidden = true, 3500); }
+
+/* ---------- CONTEÚDO (base única para revisão e consulta) ---------- */
+const G = {
+  m1: 'Módulo 1: O testador e a qualidade',
+  m2: 'Módulo 2: Técnicas de teste e exploratório',
+  m3: 'Módulo 3: QA em times ágeis',
+  doc: 'Templates de documentação (Júlio de Lima)',
+  m4: 'Módulo 4: Testes de API',
+  m5: 'Módulo 5: Performance',
+  heur: 'Heurísticas (Júlio, ALTR FACE e HTSM)',
+  sbtm: 'SBTM (artigo de Jonathan Bach)'
+};
+const C = [
+/* Módulo 1 */
+['m1','Como Glenford Myers define teste de software?','O processo de executar um software com o objetivo de procurar falhas. O resumo comenta que a visão é um pouco negativa, mas necessária para quem busca qualidade.'],
+['m1','Como Michael Bolton define testar?','Avaliar um produto aprendendo sobre ele por meio de exploração, experimentação e inferência. É preciso conhecer o software para descobrir seu funcionamento e suas falhas.'],
+['m1','Como Elisabeth Hendrickson define testar?','Interagir, observando o comportamento do sistema e comparando com as expectativas, isto é, avaliando se atende às regras de negócio pré-estabelecidas.'],
+['m1','O que Edsger Dijkstra afirma sobre testes?','Testar pode demonstrar a existência de defeitos, mas nunca a inexistência deles. É praticamente impossível afirmar que não há erros, pois é muito difícil mapear todos os cenários.'],
+['m1','Qual a diferença entre testador e qualidade de software?','Testador executa os testes e valida o funcionamento. Qualidade de software é a garantia de que se previnem falhas, um âmbito amplo (ex.: treinar o time de negócios para evitar mau uso). Chamar QA de testador é uma confusão de definição, embora popularizada.'],
+['m1','Qual a diferença entre conhecimento empírico e olhar analítico em testes?','Qualquer pessoa cria casos de teste por conhecimento empírico (ex.: transferência entre contas). O olhar analítico exige estudo da literatura, troca de conhecimento e prática, construindo um pensamento analítico.'],
+['m1','Qual a analogia do testador como drone e como se escrevem os casos de teste?','O testador busca a visão mais ampla (jornada feliz, APIs, o que pode gerar falha). Já os casos de teste são escritos pontualmente, um a um, para que cada passo seja avaliado como êxito ou falha, reportado de forma pontual, ajustado e retestado.'],
+['m1','Qual a estrutura base do Gherkin?','DADO: dados e situação inicial. QUANDO: a ação realizada. ENTÃO: o resultado. Funciona como um tradutor universal que faz qualquer pessoa entender o que precisa ser feito.'],
+['m1','Quais os 4 cenários de transferência do exemplo em Gherkin do Módulo 1?','Transferência com sucesso, Saldo insuficiente (bloqueia e mostra alerta), Limite diário excedido (bloqueia e mostra alerta) e Dados inválidos (agência ou conta com dígito errado).'],
+['m1','Por que o testador deve conhecer automação?','Reduz o impacto de falhas que chegam ao usuário final (dano financeiro e de confiança) e ajuda em testes repetitivos e regressivos, executados com mais agilidade. Entender de desenvolvimento aproxima o testador do desenvolvedor.'],
+['m1','Quais linguagens e ferramentas principais o Módulo 1 cita?','Linguagens: JavaScript, Java, Python, C#. Ferramentas: Playwright, Cypress, Selenium, Postman, Cucumber, Jira.'],
+['m1','Qual o papel da IA Gen nos testes segundo o Módulo 1?','Ajuda a mapear cenários, escrever e automatizar. Para o plano ser confiável, o testador precisa de conhecimento profundo para avaliar se o retorno faz sentido e para direcionar a IA.'],
+['m1','O que são riscos e qual a obrigação do testador sobre eles?','Riscos são possibilidades de futuros erros. O testador deve mitigá-los, antecipando a falha ao estruturar testes que mapeiem os erros possíveis. Os riscos devem ser avaliados por prioridade de impacto.'],
+['m1','Que postura o testador deve ter ao relatar ajustes?','Inteligente e humilde, evitando o confronto negativo e mostrando que o time todo se beneficia. Também deve se adaptar ao contexto sem perder a qualidade e avaliar a urgência das correções.'],
+/* Módulo 2 */
+['m2','Qual a diferença entre checking e testing?','Checking se baseia em regras de negócio e critérios de aceite, é mecânico e mais fácil de automatizar. Testing é experimentação mais livre e cognitiva, que depende da expertise de quem testa.'],
+['m2','O que são testes exploratórios (ADHOC) e quem os iniciou?','Testes sem roteiro definido de casos de teste, em que se explora e experimenta o sistema por intuição. Começou com James Bach, Cem Kaner e Bret Pettchord. Também pode revelar problemas de experiência do usuário.'],
+['m2','Quem escreveu a lista de heurísticas de teste do curso e para que servem?','Elisabeth Hendrickson, James Lyndsay e Dale Emery. Servem de norte, ajudam a mapear cenários e a escrever charters.'],
+['m2','Qual o formato do Test Charter?','Explore (alvo), Com (recursos), Para descobrir (informação). Foi criado por Elisabeth Hendrickson (Explore It!). Cada charter é uma missão de teste, sem passo a passo.'],
+['m2','Qual o exemplo de charter do resumo?','Alvo: módulo de transferências. Recursos: dados considerados inválidos. Informação: se as mensagens de erro são claras.'],
+['m2','Quais os passos da Partição de Equivalência?','1. Ler e compreender o requisito. 2. Identificar as variáveis de entrada. 3. Definir a faixa de valores de cada variável. 4. Eleger os testes. 5. Realizar os testes.'],
+['m2','Por que a Partição de Equivalência sozinha é frágil?','Ela é sensível ao limite entre as partições, por isso precisa de outras técnicas em conjunto para identificar falhas nesse limite.'],
+['m2','Na regra "transferência maior ou igual a R$ 10,00", quais os 3 pontos do valor limite?','9,99 (não permitida), 10,00 (permitida) e 10,01 (permitida). Esses 3 testes cobrem PE1 e PE2 e o intervalo sensível.'],
+['m2','Quando se usa tabela de decisão?','Quando há regras que se correlacionam. A ação é a permutação das variáveis combinadas, garantindo que as regras sejam atendidas integralmente. Exige entender partição de equivalência.'],
+['m2','Quantos testes a tabela de decisão da RN2 (valor x token) gera?','6 testes: 2 partições para o valor (>= 5000,00 e < 5000,00) vezes 3 para o token (enviado, não enviado, enviado inválido).'],
+['m2','Por que o resumo não aplica valor limite no valor de 5.000 da RN2?','O resumo diz que não precisa e nem seria indicado, pois geraria muitos testes a mais e desnecessários. Observação crítica (minha, não do material): o relatório de exemplo achou justamente um defeito nessa fronteira (rótulo diz "maior que 5k", regra diz "maior ou igual"). Vale avaliar 4999,99 / 5000,00 / 5000,01.'],
+['m2','Qual a diferença entre cobertura de sentença e de decisão?','Sentença: um teste para cada comando escrito explicitamente (o senão implícito não é testado). Decisão: cada condição é testada, mesmo a que não está explícita. São técnicas usadas por desenvolvedores.'],
+['m2','Em que formatos o mercado pede a documentação de testes?','Gherkin e formato ISO 29119-3. Há também as condições de teste, que são citadas na ISO mas não são um formato formal, apenas uma descrição. A documentação deve ser fácil de entender e os casos de teste são documentação.'],
+['m2','Como é um cenário Gherkin completo no resumo?','Funcionalidade com Como/Quero/Para, uma Regra e um Cenário com Dado (saldo, token válido, conta destino ativa), Quando (acessar, logar, escolher contas, valor, token, submeter) e Então (mensagem de sucesso, débito na origem, crédito no destino). Arquivo salvo como nome.feature.'],
+['m2','Quais as vantagens do Jira com Zephyr?','Rastreabilidade total: casos, ciclos e planos de teste escritos e executados na ferramenta. Marca-se tempo e status em tempo real, cria-se Bug no Jira direto da execução e melhora a comunicação entre POs e QAs.'],
+['m2','Quais seções estruturam o reporte de defeito no Jira?','Título (Summary), tipo Bug, descrição com contexto/pré-condições, passos para reproduzir (lista numerada), resultado esperado e resultado obtido, anexos (prints, vídeos, logs), gravidade/prioridade e ambiente (SO, navegador, dispositivo, versão).'],
+['m2','Como o resumo classifica gravidade/prioridade?','Alta: impede uso de funcionalidade crítica sem alternativa. Média: impacta uma funcionalidade, mas existe contorno. Baixa: problema estético ou pequeno detalhe visual.'],
+['m2','O que é o teste exploratório estruturado (baseado em sessões)?','Teste focado em um tempo determinado, com um documento tipo log durante a sessão (relatório de sessão e Test Charter). Mostra o valor do processo exploratório, que pode parecer banal e sem planejamento.'],
+/* Módulo 3 */
+['m3','Qual a diferença entre Cascata, Scrum e Kanban?','Cascata: processo sequencial com etapas fixas (análise, design, desenvolvimento...). Scrum: iterativo e incremental, com ciclos curtos chamados sprints (geralmente 2 semanas), reuniões regulares e papéis definidos. Kanban: fluxo contínuo, com tarefas visíveis num quadro e limite de trabalho em progresso (WIP), sem ciclos fixos.'],
+['m3','Qual o papel do PO, do Scrum Master e do Desenvolvedor?','PO (Product Owner): traz a visão e os objetivos do produto, ajuda a entender as demandas e a priorizar. Scrum Master: ajuda a entender e aplicar o Scrum, facilita o time, remove impedimentos e promove melhoria contínua. Desenvolvedor: cria e evolui o software na sprint (codificação, testes e entrega).'],
+['m3','Qual o papel do QA em um time ágil?','Mentor do time quanto à prática de testes e qualidade. Em vez de testar só no final, participa do planejamento à entrega, com foco em prevenir defeitos e não apenas detectá-los. Atua com desenvolvedores, POs e Scrum.'],
+['m3','Quais os princípios do QA dentro do time ágil?','Não se isolar. Ser corajoso, se envolver e se antecipar. Perguntar sempre. Alertar sobre riscos futuros. Ser parceiro dos DEVs, POs e SMs.'],
+['m3','Quais os pontos de atenção do QA na reunião de refinamento?','Compreender as User Stories (vê-las antes e preparar perguntas, perguntando tudo para não perder tempo depois) e fazer a estimativa de alto nível (tempo e esforço da demanda). O refinamento organiza as demandas e o que precisa ser construído, as dores e a documentação.'],
+['m3','O que o QA avalia antes e durante a Planning?','Revisar as User Stories que entram na sprint e avaliar o que precisa de teste: mapeamento de dependências, identificação de dados de teste e de testes não funcionais, grau de confiança das novas funcionalidades (riscos) e estimativas de baixo nível (testes e automação a alterar, dados de teste a criar, módulos a testar, possíveis defeitos).'],
+['m3','Como o QA deve atuar na Planning?','Trazer suas estimativas de baixo nível, compartilhar a estratégia de testes, defender decisões com argumentos palpáveis, se comprometer com o que é possível fazer e relembrar situações históricas do time (bugs, problemas comuns, situações complicadas).'],
+['m3','Como o QA deve se portar na reunião diária (daily)?','A daily compartilha as demandas, o que está sendo feito, o que se planeja e os impedimentos. O QA deve se preparar, ser transparente sobre status e dificuldades para pedir ajuda e não tentar dar desculpas.'],
+['m3','Como o QA deve atuar durante a sprint?','Não esperar tudo estar pronto (fazer mocks para dependências não construídas), automatizar cedo, executar testes e também explorar, ir além do reporte de defeito (entender o erro), fazer pair testing com o DEV, acompanhar métricas e se acostumar a revisar o código (pull requests) para ver se as regras de negócio foram implantadas.'],
+['m3','Quais métricas o QA acompanha na sprint?','Defeitos por severidade, bugs vazados, idade dos defeitos e cobertura de automação.'],
+['m3','Como o QA deve atuar na review?','Alinhar com o PO os cenários (critérios de aceitação), retestar antes de apresentar, preparar dados de teste, travar deploys no ambiente (não apresentar em ambiente de desenvolvimento onde coisas mudam), nada de mocks na apresentação (mostrar o software real), valorizar o trabalho dos devs e mencionar os testes adicionais da estratégia. Observação: mocks servem durante a sprint, não na review.'],
+['m3','O que é a reunião de retrospectiva?','Avaliar a sprint: o que foi bom, o que se pode melhorar e notas gerais. Feedback construtivo é importante, junto com um plano de ação para esses pontos, para a melhoria contínua.'],
+['m3','O que é DOR e DOD e como o QA os monitora?','DOR (definition of ready): requisitos completos, telas desenhadas, especificação de APIs, documentação entregue, detalhes das integrações, dados de teste criados. DOD (definition of done): defeitos críticos corrigidos, deploy realizado, builds passando, PRs aprovados, testes executados.'],
+['m3','Como o QA traz valor ao time além de testar?','Monitorando DOR e DOD, estudando defeitos para propor checklists (categorizando erros comuns e como evitá-los), facilitando a adoção de automação pelos devs (documentação e guias), ajudando o PO a entender riscos e dependências, treinando devs para serem bons QAs e identificando problemas de qualidade com proposta de solução.'],
+/* Documentação */
+['doc','Quais os campos do template de Condições de Teste?','Baseado na ISO-29119-3: Requisitos testados e uma tabela com ID, Condição de Teste e Prioridade.'],
+['doc','Quais as condições de teste do exemplo da RN2?','1) Limites de valor da Transferência (Alta). 2) Correlação entre envio de transferências acima do limite e a definição de um token (Média). 3) Utilização de tokens inválidos (Baixa).'],
+['doc','Quais os campos do template de Caso de Teste?','ID, Título (objetivo), Prioridade (ordem de execução), Rastreabilidade (requisitos), Pré-condições, Passos (Ação e Resultados esperados) e Pós-condições.'],
+['doc','Quais os campos do template de Defeito?','ID, Título, Testador, Data e Hora, Resultado Esperado, Resultado Atual, Evidências, Prioridade, Severidade, Informações sobre o Software, Rastreabilidade e Status.'],
+['doc','Qual a diferença entre prioridade e severidade no template de Defeito?','Prioridade é a ordem de correção do defeito perante os demais. Severidade é o quanto o defeito impacta o usuário ou o negócio.'],
+['doc','Quais os campos do template de Relatório de Sessão?','Data e hora de início, nome do testador, módulo, Test Charter, tamanho da sessão, notas (I informações ou R riscos), defeitos e perguntas. O template é inspirado no artigo de Bach sobre SBTM.'],
+['doc','Quais defeitos o relatório de sessão de exemplo registrou?','1) Label do campo Token diz maior que R$ 5k, mas a regra é maior ou igual. 2) Usuário deslogado após a transferência. 3) Saldos de Ana e Carlos não mudaram após transferir R$ 20.'],
+['doc','Qual o charter do relatório de exemplo e que pergunta ele levantou?','Explore a funcionalidade de transferência, com a heurística Sabedoria em Testes (adote abordagem contrária), para descobrir se o software lida bem com ações contrárias à regra de negócio. Pergunta: deveria ser possível transferir da conta origem para ela mesma?'],
+/* Módulo 4 */
+['m4','O que significa a heurística VADER?','Verbs, Authorization, Data, Errors, Responsiveness.'],
+['m4','O que testar em Verbs (VADER)?','Os verbos HTTP: post, get, put, patch, delete. Verificar se funcionam como esperado. Na regra de negócio eles não estão definidos claramente, mas estão em segundo plano.'],
+['m4','O que testar em Authorization (VADER)?','Recursos que dependem de login ou token: login correto, sem login, login errado, token errado, token válido, sem token. Autenticação usa o token e autorização é a permissão para certas ações, que também deve ser testada.'],
+['m4','O que testar em Data (VADER)?','Os dados enviados, a estrutura do envio e os retornos. Validar mensagens de retorno e status code, e as ações no banco de dados (ex.: mysql, show tables, select). O Swagger traz as informações para validar.'],
+['m4','O que testar em Errors (VADER)?','Os erros de retorno (200, 400, 404...). Na casa dos 400 são erros do usuário e nos 500, do servidor. Exemplo do curso: derrubar o MySQL (net stop) e refazer o POST deve retornar 500 Internal Server Error.'],
+['m4','O que testar em Responsiveness (VADER)?','Se a aplicação responde em tempo viável, definido previamente. É teste de performance: define-se um tempo de resposta desejado e executa-se um teste com usuários virtuais.'],
+['m4','Quais os erros comuns encontrados em testes de API?','Uso incorreto dos verbos HTTP, falhas de autenticação ou autorização, validações frágeis ou inexistentes, mensagens de erro genéricas ou enganosas, status code mal utilizado, tempo de resposta alto ou inconsistente sob carga e falta de tratamento de exceção.'],
+['m4','Qual o papel de Mocha, SuperTest e Chai?','Mocha organiza e executa os testes. SuperTest simula requisições HTTP e verifica as respostas (status code, formato). Chai fornece as asserções (expect) para validar resultados.'],
+['m4','Como se prepara o projeto de testes de API?','Criar pasta no VS Code, npm init -y e npm install mocha supertest chai. Ajustar name e test no package.json (o que estiver em test roda com npm test). Não deixar console.log ao finalizar.'],
+['m4','Como é a estrutura de um teste Mocha do resumo?','describe agrupa (Transferencias, POST/transferencias) e it é o caso de teste, com async quando usa await. Importar supertest e chai em todo .test.'],
+['m4','Qual o fluxo do teste de transferência do resumo?','Passo 1: POST /login com usuário e senha e guardar o token (JWT). Passo 2: POST /transferencias com header Authorization Bearer token e os dados no corpo. Passo 3: expect(status).to.equal(201).'],
+['m4','Quais os passos de versionamento com Git do resumo?','git init, criar .gitignore com node_modules/, git status, git add ., git status, git branch -M main, git commit -m e git push -u origin main.'],
+['m4','Como gerar relatório de testes com mochawesome?','Criar branch, npm i mochawesome, acrescentar o complemento na linha de test do package.json e rodar npm test. Gera uma pasta com .html. A pasta mochawesome-report é temporária e vai no .gitignore.'],
+['m4','Para que servem dotenv, helpers, hooks e fixtures?','dotenv guarda variáveis comuns em .env (ex.: BASE_URL) com require dotenv config. Helpers são funções reutilizáveis numa pasta própria. Hooks como beforeEach preparam variáveis (declaradas com let antes do it). Fixtures guardam JSONs usados com frequência.'],
+/* Módulo 5 */
+['m5','O que é teste de performance e por que é não funcional?','Garante que a aplicação suporta muitos usuários ao mesmo tempo e avalia a carga máxima. Não testa o funcionamento, e sim outras questões, depois que os testes funcionais já foram feitos. Qualidade e performance andam juntas.'],
+['m5','Quais as 8 características do modelo de qualidade do produto da ISO/IEC 25010?','Adequação Funcional, Eficiência de Desempenho, Compatibilidade, Usabilidade, Confiabilidade, Segurança, Manutenibilidade e Portabilidade.'],
+['m5','O que é o modelo de qualidade em uso da ISO 25010?','Mede o impacto do produto quando humanos interagem com ele em cenários reais: eficácia, eficiência, satisfação, segurança contra riscos e cobertura de contexto. A norma é de 2011 e substituiu a ISO/IEC 9126.'],
+['m5','Como o BrowserStack define requisitos não funcionais (RNFs)?','Especificações de como o sistema deve performar, e não do que deve fazer. Devem ser quantificáveis e mensuráveis. Errado: "carregar rápido". Certo: "carregar em menos de 2 segundos" ou "suportar 10.000 usuários simultâneos".'],
+['m5','Quais os tipos de RNFs destacados e a diferença entre disponibilidade e confiabilidade?','Desempenho, escalabilidade, portabilidade e compatibilidade, confiabilidade e disponibilidade, segurança e usabilidade. Disponibilidade é o tempo online (ex.: 99.9% de uptime). Confiabilidade mede a frequência de falhas e a recuperação.'],
+['m5','O que é desvio padrão e como interpretá-lo em performance?','Mede a dispersão dos dados em relação à média. Baixo: comportamento homogêneo e estável. Alto: volátil. Ex.: média de 2s com desvio de 5s indica experiência instável. Atenção: no resumo, o aluno B [10, 5, 9] aparece com média 7,0 e desvio 2,9, mas a média desses valores é 8,0. Revise esse exemplo.'],
+['m5','Por que usar mediana em vez de média?','A média é distorcida por outliers. Ex.: 1s, 1s, 2s, 2s, 30s tem média 7,2s (falsa impressão de lentidão geral) e mediana 2s, que reflete a maioria.'],
+['m5','O que é a linha dos 90 (90th percentile) e por que é a favorita?','O valor abaixo do qual estão 90% dos dados. Ex.: linha dos 90 de 3s significa que 90% dos usuários tiveram até 3s. Como não dá para garantir 100%, os RNFs são definidos em percentis: "a linha dos 90 deve ser menor ou igual a 2 segundos".'],
+['m5','O que é o k6 e que tipos de teste ele simula?','Ferramenta open-source da Grafana Labs para testes de carga e performance de APIs, microsserviços e web. Simula carga (volume esperado), estresse (além do limite), pico (enxurrada súbita) e navegador (k6 Browser, com cliques e renderização).'],
+['m5','O que faz o script de login do k6 do resumo?','Cria um objeto data com usuário e senha, faz POST no endpoint de login, usa check para verificar status 200 ("success login") e pausa 0,3s antes de repetir, simulando comportamento humano e evitando sobrecarga irrealista.'],
+['m5','O que são checks no k6 e o que acontece quando falham?','Asserções booleanas (status 200, tamanho do corpo, texto presente). Um check que falha NÃO interrompe o teste: o k6 continua e só contabiliza sucesso ou falha (checks_total, checks_succeeded, checks_failed). Servem para saber se a API está ok funcionalmente.'],
+['m5','O que são thresholds no k6?','Critérios de aprovação ou reprovação conforme a métrica definida. Se a performance fica abaixo do definido, o teste termina como failed. Pode-se testar qualquer critério que apareça no resultado do k6.'],
+['m5','Como gerar o dashboard web do k6?','Definindo as variáveis K6_WEB_DASHBOARD=true e K6_WEB_DASHBOARD_EXPORT com o nome do html antes do k6 run (no PowerShell com $env:). O dashboard só pode ser visto durante a execução; se esperar terminar, o link dá erro.'],
+['m5','O que são usuários virtuais (VUs) e iterações?','Instâncias paralelas que executam o script JavaScript para simular acessos simultâneos. Cada VU roda a função default em loop até o tempo acabar ou as iterações definidas. Cada volta completa é uma iteração.'],
+['m5','O que são stages no k6?','Configuração de carga dinâmica, com rampa de subida ou descida de VUs. Cada estágio tem duration (duração do bloco) e target (VUs a alcançar até o fim dele), com rampa linear e suave.'],
+['m5','Para que servem variáveis de ambiente no k6 e qual o cuidado?','Guardam valores fora do código (ex.: a URL base) e os passam ao script. Se a URL for esquecida ao rodar, o teste retorna erro, e isso precisa ser tratado (o resumo cria uma pasta utils para isso).'],
+/* Heurísticas */
+['heur','De onde vêm as heurísticas do material do Júlio?','Do material da Test Obsessed (Test Heuristics Cheat Sheet), com ideias de Elisabeth Hendrickson, James Lyndsay e Dale Emery. Cinco grupos: Ataques de Tipos de Dados, Strings, UI, Sabedoria em Testes e Gerais.'],
+['heur','Quais heurísticas de Ataques de Tipos de Dados (nomes e arquivos) existem?','Nome longo (mais de 255), caracteres especiais, inexistente, já existente, sem espaços, espaço mínimo, protegido contra gravação, indisponível, bloqueado, em máquina remota, corrompido, timeout, diferença de horários entre máquinas, dias inválidos (30 de fevereiro) e formatos de data.'],
+['heur','Quais heurísticas de Testes de Strings existem?','Strings longas (255, 256, 1000+), caracteres acentuados, asiáticos, especiais e delimitadores, em branco, espaços no início ou fim e injeção de SQL.'],
+['heur','Quais heurísticas de Testes de UI existem?','Botão Voltar (mensagens de expirado ou transações duplicadas), atualizar página, manipular URL, desativar JavaScript e validação de HTML e CSS (validator.w3.org e jigsaw.w3.org).'],
+['heur','Quais as heurísticas de Sabedoria em Testes?','Testes como experimentos (revelam informações e respondem perguntas), falhas agrupadas (grandes falhas aparecem juntas) e adote abordagem contrária (teste o que o sistema não deveria fazer).'],
+['heur','Quais as Heurísticas Gerais do material do Júlio?','CRUD (integridade em criar, ler, atualizar e deletar), Siga os Dados (mapear dependências como Cliente possui Faturas) e Interrupções (reinício, timeout, logout).'],
+['heur','O que é a heurística ALTR FACE e para que serve?','Heurística de Júlio de Lima para aplicações web modernas. Apps modernos usam componentes artesanais, o que causa falhas que não eram comuns com componentes nativos. A sigla: Activation, Layers, Timing, Removable, Float, Achievable, Collision, Expansion.'],
+['heur','ALTR FACE: Activation','Objetos ativados por evento devem mudar de estado quando o evento é disparado. Ex.: elementos que ficam interativos ao selecionar uma opção, que aparecem ou somem após o clique. Falha: mensagem do balão não aparece no hover.'],
+['heur','ALTR FACE: Layers','O objeto deve ocupar apenas a camada destinada. Ex.: elementos atrás dos elementos em foco, à frente dos desfocados. Falha: o balão deveria estar na frente de tudo.'],
+['heur','ALTR FACE: Timing','O objeto deve estar visível no momento exato planejado. Ex.: desaparecer após 10 segundos, aparecer 3 segundos após o clique, ganhar foco 10 segundos após salvar o formulário.'],
+['heur','ALTR FACE: Removable','Objetos removíveis devem permitir remoção ou ocultação. Ex.: sair com clique no X, ocultar com comando de teclado, desaparecer ao perder o foco. Falha: o balão deveria sumir quando o hover sai do botão.'],
+['heur','ALTR FACE: Float','Objetos flutuantes devem flutuar durante a rolagem. Ex.: elementos que flutuam ao rolar, ou que mudam de posição enquanto flutuam (menu fixo no topo).'],
+['heur','ALTR FACE: Achievable','Objetos fora da área visível de rolagem devem ser alcançáveis. Ex.: caixa pequena com muitos itens deve ter barra de rolagem, carrossel que mostra 3 de 5 deve ter controles, menu maior que a área deve permitir ver o restante.'],
+['heur','ALTR FACE: Collision','O objeto não deve colidir com outros durante o movimento. Ex.: um brinde que empurra outros elementos ao se mover, um menu superior que empurra a página para baixo ao se mover. Os botões não devem se mover.'],
+['heur','ALTR FACE: Expansion','Objetos internos não devem se sobrepor nem expandir o tamanho normal dos contêineres. Ex.: item de menu não deve alterar o tamanho do menu ao receber foco, elemento maximizado não deve empurrar os vizinhos.'],
+['heur','O que é o Heuristic Test Strategy Model (HTSM) de James Bach?','Conjunto de padrões para projetar e escolher testes (versão 6.0, 2024). Lembra o testador do que pensar. Partes: Project Environment, Product Elements, Quality Criteria Categories, General Test Techniques e Testing and Quality Story.'],
+['heur','O que é a Testing and Quality Story no HTSM?','O resultado dos testes. Nunca se conhece a qualidade real nem se pode verificá-la, mas testando se faz uma avaliação, que toma a forma de uma história contada (com bugs, curiosidades etc.).'],
+['heur','Quais as 9 famílias de técnicas gerais do HTSM?','Function, Domain, Stress, Flow, Scenario, Claims, User, Risk e Tool-Supported Testing.'],
+['heur','HTSM: Function e Domain Testing','Function: testar o que o produto pode fazer, uma função por vez, vendo se faz o que deve e não o que não deve. Domain: particionar os dados, olhando entradas e saídas, usando valores limite, típicos, inválidos, e combinações que valem a pena.'],
+['heur','HTSM: Stress e Flow Testing','Stress: sobrecarregar o produto com dados desafiadores ou recursos restritos (cargas altas, longas execuções, pouca memória). Flow: fazer uma coisa após a outra, sem resetar o sistema, variando tempo e sequência e tentando threads paralelas.'],
+['heur','HTSM: Scenario e Claims Testing','Scenario: testar uma história convincente de como alguém importante faria algo importante com o produto. Claims: desafiar cada afirmação (SLAs, EULAs, anúncios, especificações, ajuda, manuais), esclarecendo as vagas.'],
+['heur','HTSM: User, Risk e Tool-Supported Testing','User: envolver usuários de várias categorias e papéis (cuidado ao simular, é fácil achar que se é como o usuário). Risk: imaginar um problema e procurá-lo, focando nos que mais importam. Tool-Supported: usar ferramentas para tornar o testador mais poderoso.'],
+['heur','Quais as categorias do Project Environment no HTSM?','Mission, Information, Developer Relations, Test Team, Equipment & Tools, Schedule, Test Items e Deliverables.'],
+['heur','Quais os Product Elements do HTSM?','Structure, Function, Data, Interfaces, Platform, Operations e Time.'],
+['heur','Quais as Quality Criteria Categories do HTSM?','Capability, Reliability, Usability, Charisma, Security, Scalability, Compatibility, Performance, Installability e Development. Podem ser vistas como categorias de risco do produto.'],
+/* SBTM */
+['sbtm','O que é uma sessão no SBTM?','Bloco ininterrupto, revisável e com charter de esforço de teste. É a unidade básica de trabalho (e não o caso de teste ou o relatório de bug). Ininterrupto: sem e-mail, reuniões, chats ou telefonemas. Revisável: gera uma session sheet.'],
+['sbtm','Quanto dura uma sessão e quantas se esperam por dia?','Cerca de 90 minutos. Perto de 45 minutos é sessão curta, perto de 2 horas é longa. Espera-se cerca de 3 sessões por dia por testador, por causa de reuniões, e-mails e outras atividades.'],
+['sbtm','Quais as seções de uma session sheet?','Charter (missão e áreas), nome do testador, data e hora de início, task breakdown (métricas TBS), data files, test notes, issues e bugs.'],
+['sbtm','O que são as métricas TBS?','Proporção do tempo em três tarefas: test design and execution, bug investigation and reporting e session setup (configurar, achar material, ler manuais, escrever o relatório). Também se informa a proporção on charter versus on opportunity.'],
+['sbtm','Qual a diferença entre bugs, issues e notes na session sheet?','Bugs são preocupações sobre a qualidade do produto. Issues são dúvidas ou problemas do processo de teste ou do projeto. Notes são registro livre (ideias de casos, listas de funções, listas de risco).'],
+['sbtm','O que é opportunity testing?','Teste que foge do charter da sessão. É permitido divergir se o testador tropeçar em um problema importante fora do charter. Se quase toda a sessão for opportunity, o gerente muda o charter para refletir o que foi feito.'],
+['sbtm','O que é o debriefing e o que significa PROOF?','Conversa curta entre testador e gerente após a sessão para entender e aceitar o relatório e dar coaching. PROOF: Past (o que aconteceu), Results (o que foi alcançado), Obstacles (o que atrapalhou), Outlook (o que falta fazer) e Feelings (como o testador se sente).'],
+['sbtm','O que são ToDo sessions e o hopper?','ToDo sheets têm charter e o resto em branco. A lista delas (o hopper) é de onde os testadores pegam a próxima sessão. Permite chartar uma passada de regressão inteira e priorizar pedidos de clientes frente às demais sessões.'],
+['sbtm','Qual a Golden Rule do SBTM?','Testers always get credit for testing. Se o testador fez trabalho que deveria estar numa sessão, cria-se uma session sheet para ele ou o trabalho é somado a uma existente, para refletir o teste realmente feito.'],
+['sbtm','Como o SBTM trata casos especiais de sessão?','Dois testadores na sessão contam como duas sessões. Sessão de 4 horas: Duration "long * 2". Interrupção inevitável: a sessão pode ser suspensa e retomada. Charter impossível: abortar e fazer outra. Charter grande demais: reduzir o escopo ou criar mais sessões.'],
+['sbtm','Como se contabiliza escrever a session sheet e o debriefing?','Completar a session sheet conta como session setup, dentro da sessão. O debriefing conta como trabalho fora de sessão (non-session).'],
+['sbtm','Como o SBTM mede o trabalho fora de sessão?','Assume-se que um dia normal teria 5,333 sessões se só houvesse sessões. Subtrai-se as sessões realizadas do máximo teórico para saber o trabalho non-session. Não é super preciso, mas serve ao propósito.'],
+['sbtm','Quais os riscos e limites do SBTM apontados pelo artigo?','Métricas podem ser distorcidas por gerente confuso ou enviesado, por testador persuasivo ou por confusão no protocolo. Pesa no gerente de testes, gera muitas métricas e pode ser burocrático para testadores sêniores. É uma forma de trazer accountability ao exploratório quando isso é importante.'],
+['sbtm','Como o SBTM trata áreas já testadas e correção de bugs?','Em áreas já testadas, o testador revisa as test notes anteriores e as refina. Para bug fixes usa-se a área "strategy | bug regression" e um charter para checar cada correção, testando também ao redor para ver se algo não quebrou.']
+];
+
+/* ---------- Abas ---------- */
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('nav button').forEach(x => x.setAttribute('aria-selected', x === b));
+  ['plano','revisao','exercicios','conteudo'].forEach(id => $('#' + id).hidden = id !== b.dataset.t);
+});
+
+/* ---------- PLANO ---------- */
+const optsG = Object.values(G).concat(['Outro']);
+$('#f-module').innerHTML = optsG.map(o => `<option>${esc(o)}</option>`).join('');
+$('#f-type').onchange = () => {
+  const rec = $('#f-type').value === 'recorrente';
+  $('#l-freq').hidden = !rec;
+  if (!rec) { $('#f-freq').value = ''; $('#e-freq').textContent = ''; }
+};
+
+$('#gform').onsubmit = ev => {
+  ev.preventDefault();
+  const title = $('#f-title').value.trim(), hoursRaw = $('#f-hours').value.trim();
+  const type = $('#f-type').value, freq = $('#f-freq').value, atRaw = $('#f-at').value;
+  const e = { title: '', hours: '', freq: '', at: '' };
+  if (!title) e.title = 'Informe um título.';
+  const h = Number(hoursRaw);
+  if (!hoursRaw || !Number.isInteger(h) || h < 1 || h > 20) e.hours = 'Informe horas inteiras entre 1 e 20.';
+  if (type === 'recorrente' && !freq) e.freq = 'Escolha a frequência da meta recorrente.';
+  const at = new Date(atRaw).getTime();
+  if (!atRaw || isNaN(at)) e.at = 'Informe a data e a hora.';
+  else if (at <= Date.now()) e.at = 'A data e hora devem ser futuras.';
+  for (const k in e) $('#e-' + k).textContent = e[k];
+  if (Object.values(e).some(Boolean)) return;
+  S.goals.push({ id: Date.now() + Math.random(), title, module: $('#f-module').value, desc: $('#f-desc').value.trim(),
+    type, freq: type === 'recorrente' ? freq : null, hours: h, at, postponed: 0, count: 0 });
+  save(); renderGoals(); ev.target.reset(); $('#f-type').onchange();
+  toast('Meta salva.');
+};
+
+function renderGoals() {
+  const l = [...S.goals].sort((a, b) => a.at - b.at), now = Date.now();
+  $('#glist').innerHTML = l.length ? l.map(g => {
+    const due = g.at <= now;
+    return `<article class="card ${due ? 'due' : ''}">
+      <div class="row"><h3>${esc(g.title)}</h3>${due ? '<span class="tag">Chegou a hora</span>' : ''}</div>
+      <p class="meta">${fmt(g.at)} | ${esc(g.module)} | ${g.hours}h por semana | ${g.type === 'recorrente' ? 'Recorrente (' + g.freq + ')' : 'Única'}${g.postponed ? ' | adiada ' + g.postponed + ' de ' + MAX_POST : ''}${g.count ? ' | feita ' + g.count + 'x' : ''}</p>
+      ${g.desc ? '<p>' + esc(g.desc) + '</p>' : ''}
+      <div class="btns"><button data-a="done" data-id="${g.id}">Concluir</button>
+      <button class="ghost" data-a="post" data-id="${g.id}">Adiar</button>
+      <button class="ghost" data-a="del" data-id="${g.id}">Excluir</button></div></article>`;
+  }).join('') : '<p class="empty">Nenhuma meta futura. Cadastre a primeira no formulário acima.</p>';
+  $('#gcount').textContent = 'Metas concluídas: ' + S.doneN;
+}
+$('#glist').onclick = ev => {
+  const b = ev.target.closest('button'); if (!b) return;
+  const id = Number(b.dataset.id);
+  if (b.dataset.a === 'done') finish(id);
+  if (b.dataset.a === 'post') openModal(id, false);
+  if (b.dataset.a === 'del' && confirm('Excluir esta meta?')) { S.goals = S.goals.filter(g => g.id !== id); save(); renderGoals(); }
+};
+
+function finish(id) {
+  const g = S.goals.find(x => x.id === id); if (!g) return;
+  S.doneN++;
+  if (g.type === 'recorrente') {
+    const step = g.freq === 'diária' ? 864e5 : 6048e5;
+    do { g.at += step; } while (g.at <= Date.now());
+    g.postponed = 0; g.count = (g.count || 0) + 1;
+  } else S.goals = S.goals.filter(x => x.id !== id);
+  save(); renderGoals(); closeModal();
+}
+
+/* Modal de alerta e adiamento */
+let cur = null;
+function openModal(id, alertMode) {
+  const g = S.goals.find(x => x.id === id); if (!g) return;
+  cur = id;
+  $('#mt').textContent = alertMode ? 'Chegou a hora: ' + g.title : 'Adiar: ' + g.title;
+  $('#md').textContent = g.desc || '';
+  $('#mm').textContent = 'Marcada para ' + fmt(g.at) + (g.postponed ? ' | adiamentos usados: ' + g.postponed + ' de ' + MAX_POST : '');
+  const full = g.postponed >= MAX_POST;
+  $('#mb').innerHTML = (alertMode ? '<button id="m-done">Marcar como vista</button>' : '') +
+    `<button class="ghost" id="m-post" ${full ? 'disabled' : ''}>Adiar</button>` +
+    (!alertMode ? '<button class="ghost" id="m-cancel">Cancelar</button>' : '');
+  $('#merr').textContent = full ? 'Limite de ' + MAX_POST + ' adiamentos atingido. Conclua ou exclua a meta.' : '';
+  $('#mp').hidden = true; $('#mdt').value = '';
+  $('#modal').hidden = false;
+  if ($('#m-done')) $('#m-done').onclick = () => finish(id);
+  $('#m-post').onclick = () => { $('#mp').hidden = false; $('#merr').textContent = ''; };
+  if ($('#m-cancel')) $('#m-cancel').onclick = closeModal;
+}
+function closeModal() { $('#modal').hidden = true; cur = null; }
+$('#mok').onclick = () => {
+  const g = S.goals.find(x => x.id === cur); if (!g) return;
+  if (g.postponed >= MAX_POST) { $('#merr').textContent = 'Limite de adiamentos atingido.'; return; }
+  const at = new Date($('#mdt').value).getTime();
+  if (!$('#mdt').value || isNaN(at)) { $('#merr').textContent = 'Informe a nova data e hora.'; return; }
+  if (at <= Date.now()) { $('#merr').textContent = 'A nova data e hora devem ser futuras.'; return; }
+  g.at = at; g.postponed++;
+  save(); renderGoals(); closeModal(); toast('Meta adiada.');
+};
+
+/* Verificação de alertas (só funciona com a página aberta) */
+let tick = 0;
+setInterval(() => {
+  if (++tick % 15 === 0) renderGoals();
+  if (!$('#modal').hidden) return;
+  const g = S.goals.filter(x => x.at <= Date.now()).sort((a, b) => a.at - b.at)[0];
+  if (g) { renderGoals(); openModal(g.id, true); }
+}, 1000);
+
+/* ---------- REVISÃO ---------- */
+let queue = [], shown = false;
+$('#rgrp').innerHTML = '<option value="all">Todos os assuntos</option>' + Object.keys(G).map(k => `<option value="${k}">${esc(G[k])}</option>`).join('');
+$('#rgrp').onchange = startRev;
+function startRev() {
+  const g = $('#rgrp').value;
+  queue = C.map((c, i) => i).filter(i => g === 'all' || C[i][0] === g);
+  shown = false; renderRev();
+}
+function renderRev() {
+  const box = $('#rev');
+  if (!queue.length) { box.innerHTML = '<p class="big">Sessão concluída.</p><div class="btns"><button id="rs">Revisar de novo</button></div>'; $('#rs').onclick = startRev; }
+  else {
+    const c = C[queue[0]];
+    box.innerHTML = `<p class="meta">${esc(G[c[0]])} | restam ${queue.length}</p><p class="big">${esc(c[1])}</p>` +
+      (shown ? `<div class="gab"><p>${esc(c[2])}</p></div><div class="btns"><button id="r-ok">Lembrei</button><button class="ghost" id="r-miss">Errei</button></div>`
+             : '<div class="btns"><button id="r-show">Mostrar resposta</button></div>');
+    if (!shown) $('#r-show').onclick = () => { shown = true; renderRev(); };
+    else {
+      $('#r-ok').onclick = () => { queue.shift(); S.ok++; next(); };
+      $('#r-miss').onclick = () => { const i = queue.shift(); queue.splice(Math.min(2, queue.length), 0, i); S.miss++; next(); };
+    }
+  }
+  $('#rstat').textContent = 'Acumulado: ' + S.ok + ' lembrados e ' + S.miss + ' errados.';
+}
+function next() { shown = false; save(); renderRev(); }
+
+/* ---------- EXERCÍCIOS ---------- */
+const E = [
+ { id: 1, t: 'Montar um Test Charter', q: 'Escreva um charter para o módulo de transferências, usando dados considerados inválidos, com o objetivo de descobrir se as mensagens de erro são claras.',
+   g: 'Explore o módulo de transferências. Com dados considerados inválidos. Para descobrir se as mensagens de erro são claras. (Resumo Módulo 2)' },
+ { id: 2, t: 'Partições de equivalência', q: 'Regra: o valor da transferência deve ser maior ou igual a R$ 10,00. Liste as partições e dois testes.',
+   g: 'PE1: valor >= 10,00, transferência realizada. PE2: valor < 10,00, transferência não realizada (a regra não diz o que deve acontecer, o que vale uma pergunta ao time). Testes: 15,00 realizada e 4,00 não realizada.' },
+ { id: 3, t: 'Análise do valor limite', q: 'Para a mesma regra (maior ou igual a R$ 10,00), defina os 3 testes de valor limite e os resultados esperados.',
+   g: '9,99 não permitida. 10,00 permitida. 10,01 permitida.' },
+ { id: 4, t: 'Tabela de decisão', q: 'RN2: valor >= R$ 5.000,00 exige token. Variáveis: valor e token. Quantas combinações existem e quais são?',
+   g: 'Valor tem 2 partições (>= 5000 e < 5000) e token tem 3 (enviado, não enviado, enviado inválido). Total: 2 x 3 = 6 testes, uma combinação de cada partição de valor com cada partição de token.' },
+ { id: 5, t: 'Cobertura de sentença e de decisão', q: 'Código: se valor < 10 então mostre mensagem de erro. Quantos testes cada técnica pede e por quê?',
+   g: 'Sentença: um teste (valor < 10), pois o senão está implícito e não precisa ser testado. Decisão: cada condição deve ser testada, mesmo a implícita, então também um teste com valor >= 10 (sem mensagem de erro).' },
+ { id: 6, t: 'Escrever um cenário em Gherkin', q: 'Escreva um cenário de transferência com saldo insuficiente (cliente com R$ 50,00 tenta transferir R$ 100,00).',
+   g: 'Dado que o cliente possui apenas R$ 50,00 de saldo em conta e inseriu os dados válidos do destino. Quando ele tenta confirmar uma transferência de R$ 100,00. Então o avanço deve ser bloqueado, exibir o alerta "Saldo insuficiente para realizar a operação" e o saldo deve ser mantido em R$ 50,00. (Resumo Módulo 1)' },
+ { id: 7, t: 'Reportar um defeito', q: 'O label do campo Token diz que o valor deve ser maior que R$ 5k, mas a regra diz maior ou igual. Liste as seções do reporte desse defeito no Jira ou no template do curso.',
+   g: 'Título claro, tipo Bug, contexto/pré-condições, passos para reproduzir (lista numerada), resultado esperado (alinhado à regra: maior ou igual), resultado obtido (label diz maior que), anexos (print), gravidade/prioridade e ambiente. No template do curso: ID, Título, Testador, Data e Hora, Esperado, Atual, Evidências, Prioridade, Severidade, Informações do Software, Rastreabilidade e Status.' },
+ { id: 8, t: 'VADER aplicado a uma API', q: 'Para o endpoint POST /transferencias, escreva uma ideia de teste para cada letra de VADER.',
+   g: 'V: testar POST e também GET, PUT, PATCH, DELETE onde não deveriam funcionar. A: login correto, sem login, login errado, token errado, sem token. D: validar dados enviados, retornos, status e a gravação no banco. E: provocar 400, 404 e derrubar o servidor para ver o 500. R: definir um tempo de resposta e testar com usuários virtuais. (Resumo Módulo 4)' },
+ { id: 9, t: 'Requisito não funcional mensurável', q: 'Reescreva "a barra de pesquisa deve carregar rápido" como um RNF bom, e proponha também uma versão em percentil.',
+   g: 'Exemplos do material: "O sistema deve carregar em menos de 2 segundos" ou "deve suportar 10.000 usuários simultâneos". Em percentil: "A linha dos 90 deve ser menor ou igual a 2 segundos". RNFs precisam ser quantificáveis e mensuráveis. (Resumo Módulo 5)' },
+ { id: 10, t: 'Média x mediana', q: 'Cinco usuários tiveram tempos de resposta de 1s, 1s, 2s, 2s e 30s. Calcule média e mediana e diga qual representa melhor o usuário comum.',
+   g: 'Média = (1+1+2+2+30)/5 = 7,2s. Mediana = 2s (valor central). A mediana representa melhor a maioria, pois a média é distorcida pelo outlier de 30s.' },
+ { id: 11, t: 'Stages no k6', q: 'Descreva em palavras uma rampa de carga: sobe a 10 VUs em 30 segundos, mantém por 1 minuto e desce a 0 em 30 segundos. Quais os dois parâmetros de cada estágio?',
+   g: 'Cada estágio tem duration e target. Estágio 1: 30s com target 10. Estágio 2: 1 minuto com target 10. Estágio 3: 30s com target 0. O k6 calcula a rampa linear automaticamente. (Resumo Módulo 5)' },
+ { id: 12, t: 'Classificar falhas com ALTR FACE', q: 'Classifique pela letra da ALTR FACE: (a) o balão não aparece no hover, (b) o balão aparece atrás de outros elementos, (c) o balão não some quando o mouse sai do botão, (d) o item de menu aumenta o tamanho do menu ao receber foco.',
+   g: '(a) Activation. (b) Layers. (c) Removable. (d) Expansion. (ALTR FACE, Júlio de Lima)' },
+ { id: 13, t: 'QA no refinamento', q: 'Você é QA e vai a uma reunião de refinamento. Liste o que fazer antes e durante a reunião.',
+   g: 'Antes: ler as User Stories e preparar as perguntas. Durante: garantir a compreensão das User Stories, perguntar tudo que tiver de dúvida para não perder tempo depois e participar da estimativa de alto nível (tempo e esforço). (Resumo Módulo 3)' },
+ { id: 14, t: 'DOR ou DOD?', q: 'Classifique como DOR ou DOD: (a) telas já desenhadas, (b) builds passaram, (c) dados de teste já criados, (d) PRs aprovados, (e) especificação das APIs entregue, (f) defeitos críticos corrigidos.',
+   g: '(a) DOR. (b) DOD. (c) DOR. (d) DOD. (e) DOR. (f) DOD. DOR é o que precisa estar pronto antes de começar. DOD é o que precisa estar pronto para considerar entregue. (Resumo Módulo 3)' },
+ { id: 15, t: 'Scrum x Kanban', q: 'Explique em poucas linhas a diferença entre Scrum e Kanban e cite o que o Kanban limita.',
+   g: 'Scrum é iterativo e incremental, com sprints curtas (geralmente 2 semanas), reuniões regulares e papéis definidos. Kanban tem fluxo contínuo, visualiza as tarefas num quadro e limita o trabalho em progresso (WIP), sem ciclos fixos.' },
+ { id: 16, t: 'Preparar a review', q: 'Sua sprint termina amanhã e você apresenta na review. Liste cinco cuidados do QA.',
+   g: 'Alinhar com o PO os cenários (critérios de aceitação), retestar antes de apresentar, preparar os dados de teste, travar os deploys no ambiente, não usar mocks (mostrar o software real) e valorizar o trabalho dos devs. Também mencionar os testes adicionais da estratégia. (Resumo Módulo 3)' }
+];
+function renderEx() {
+  $('#exl').innerHTML = E.map(e => {
+    const s = S.ex[e.id] || { answer: '', sent: false, done: false };
+    return `<article class="card"><div class="row"><h3>${e.id}. ${esc(e.t)}</h3>${s.done ? '<span class="tag">Concluído</span>' : ''}</div>
+      <p>${esc(e.q)}</p>
+      <textarea data-id="${e.id}" ${s.sent ? 'readonly' : ''} placeholder="Escreva sua resposta">${esc(s.answer)}</textarea>
+      <span class="err" id="ee${e.id}"></span>
+      ${!s.sent ? `<div class="btns"><button data-a="send" data-id="${e.id}">Enviar resposta</button></div>`
+        : `<div class="gab"><strong>Gabarito</strong><p>${esc(e.g)}</p></div>` + (s.done ? '' : `<div class="btns"><button data-a="fin" data-id="${e.id}">Marcar como concluído</button></div>`)}
+    </article>`;
+  }).join('');
+}
+$('#exl').oninput = ev => {
+  const t = ev.target; if (t.tagName !== 'TEXTAREA') return;
+  const id = t.dataset.id; S.ex[id] = Object.assign({ sent: false, done: false }, S.ex[id], { answer: t.value }); save();
+};
+$('#exl').onclick = ev => {
+  const b = ev.target.closest('button'); if (!b) return;
+  const id = b.dataset.id, s = S.ex[id] || { answer: '', sent: false, done: false };
+  if (b.dataset.a === 'send') {
+    const v = b.closest('article').querySelector('textarea').value.trim();
+    if (!v) { $('#ee' + id).textContent = 'Escreva uma resposta antes de enviar.'; return; }
+    S.ex[id] = Object.assign(s, { answer: v, sent: true });
+  }
+  if (b.dataset.a === 'fin' && s.sent) S.ex[id] = Object.assign(s, { done: true });
+  save(); renderEx();
+};
+
+/* ---------- CONTEÚDO ---------- */
+function renderRef() {
+  const q = $('#rq').value.trim().toLowerCase();
+  let h = '';
+  for (const k in G) {
+    const l = C.filter(c => c[0] === k && (!q || (c[1] + ' ' + c[2]).toLowerCase().includes(q)));
+    if (!l.length) continue;
+    h += `<h3 class="gh">${esc(G[k])} (${l.length})</h3>` + l.map(c => `<details class="card"><summary>${esc(c[1])}</summary><p>${esc(c[2])}</p></details>`).join('');
+  }
+  $('#rl').innerHTML = h || '<p class="empty">Nenhum conteúdo encontrado para essa busca.</p>';
+}
+$('#rq').oninput = renderRef;
+
+renderGoals(); startRev(); renderEx(); renderRef();
+</script>
+</body>
+</html>
