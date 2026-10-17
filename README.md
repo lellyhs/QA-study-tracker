@@ -8,7 +8,7 @@ Projeto desenvolvido como exercício da mentoria de testes de software do Júlio
 
 É uma página única, sem instalação e sem dependências.
 
-1. Baixe o arquivo `index.html`.
+1. Baixe o arquivo `index.html` (ou `qa-study-tracker.html`).
 2. Abra no navegador (duplo clique ou arrastando para uma janela do navegador).
 3. Funciona em computador e em celular.
 
@@ -63,7 +63,7 @@ Regras definidas para permitir a aplicação das técnicas de modelagem de teste
 
 - Site em HTML, formato Single Page, com CSS e JavaScript no mesmo arquivo.
 - Armazenamento no próprio navegador (`localStorage`).
-- Esquema de cores escuro com tons de laranja.
+- Esquema de cores originalmente escuro com tons de laranja. O professor liberou um visual alternativo, e a versão atual usa um tema claro e suave, inspirado em caça-bugs (fundo de caderno, fichas de estudo e mascote de joaninha com lupa).
 - Funciona em desktop e em dispositivos móveis.
 - Sem testes automatizados (o teste é manual).
 
@@ -74,3 +74,19 @@ Regras definidas para permitir a aplicação das técnicas de modelagem de teste
 - Limpar os dados do navegador apaga metas e progresso.
 - Abrir o app em mais de uma aba pode gerar inconsistências.
 - O conteúdo dos cartões vem exclusivamente dos resumos e materiais do curso.
+
+## Documentação de testes
+
+_A preencher durante a execução do exercício._
+
+- Condições de teste: _link_
+- Casos de teste: _link_
+- Relatórios de sessão: _link_
+- Defeitos encontrados: _link_
+
+## Publicar no GitHub Pages (opcional)
+
+1. Deixe o arquivo na raiz do repositório com o nome `index.html`.
+2. No repositório, vá em **Settings > Pages**.
+3. Em **Branch**, escolha `main` e a pasta raiz.
+4. Salve e aguarde o link ser gerado.
