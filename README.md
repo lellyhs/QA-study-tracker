@@ -26,7 +26,7 @@ Projeto desenvolvido como exercício da mentoria de testes de software do Júlio
 - Contador acumulado de acertos e erros.
 
 ### Exercícios
-- 16 exercícios com gabarito.
+- 21 exercícios com gabarito.
 - O gabarito só aparece depois de enviar uma resposta, e só então é possível marcar o exercício como concluído.
 
 ### Conteúdo
@@ -42,10 +42,11 @@ Projeto desenvolvido como exercício da mentoria de testes de software do Júlio
 | Templates | Condições de teste, caso de teste, defeito e relatório de sessão |
 | Módulo 4 | Heurística VADER, testes de API, Mocha, SuperTest, Chai, Git, mochawesome, dotenv |
 | Módulo 5 | Performance, ISO 25010, RNFs, estatística (desvio padrão, mediana, linha dos 90), k6 |
+| Módulo 6 | Acessibilidade (WCAG, Axe), Lighthouse, responsividade, mocks (Mockoon), erros comuns em web, Cypress (hooks, variáveis, navegação, relatórios) |
 | Heurísticas | Heurísticas do Júlio, ALTR FACE e Heuristic Test Strategy Model (James Bach) |
 | SBTM | Artigo de Jonathan Bach sobre Session-Based Test Management |
 
-Total: 123 flashcards e 16 exercícios.
+Total: 148 flashcards e 21 exercícios.
 
 ## Regras de negócio
 
