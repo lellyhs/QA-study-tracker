@@ -2,15 +2,18 @@
 
 Aplicação web de apoio aos estudos de Quality Assurance e testes de software. Reúne plano de estudo, revisão em flashcards, exercícios com gabarito e uma aba de consulta do conteúdo do curso.
 
-Projeto desenvolvido como exercício da mentoria de testes de software do Júlio de Lima (Modelagem, Documentação e Execução de Testes). O app é o **objeto de teste** do exercício: ele será testado manualmente, com documentação e reporte de defeitos.
+Projeto desenvolvido como exercício da Mentoria 2.0 do Júlio de Lima (curso Modelagem, Documentação e Execução de Testes). O app é o **objeto de teste** do exercício: ele foi testado manualmente, com documentação e reporte de defeitos.
+
+**Acesse o app:** https://lellyhs.github.io/QA-study-tracker/
 
 ## Como abrir
 
-É uma página única, sem instalação e sem dependências.
+É uma página única, sem instalação e sem dependências. Há duas formas:
 
-1. Baixe o arquivo `index.html` (ou `qa-study-tracker.html`).
-2. Abra no navegador (duplo clique ou arrastando para uma janela do navegador).
-3. Funciona em computador e em celular.
+- **Online:** acesse o link acima (GitHub Pages).
+- **Localmente:** baixe o arquivo `index.html` e abra no navegador (duplo clique ou arrastando para uma janela do navegador).
+
+Funciona em computador e em celular.
 
 ## Funcionalidades
 
@@ -71,23 +74,24 @@ Regras definidas para permitir a aplicação das técnicas de modelagem de teste
 ## Limitações conhecidas
 
 - Os alertas só disparam **com a página aberta**. Não há backend nem notificações do sistema.
-- Os dados ficam no navegador e são **separados por endereço**. Dados salvos ao abrir o arquivo localmente não aparecem na versão publicada (por exemplo, no GitHub Pages), e vice-versa.
+- Os dados ficam no navegador e são **separados por endereço**. Dados salvos ao abrir o arquivo localmente não aparecem na versão publicada (GitHub Pages), e vice-versa.
 - Limpar os dados do navegador apaga metas e progresso.
-- Abrir o app em mais de uma aba pode gerar inconsistências.
+- Com o app aberto em duas abas, a segunda **não atualiza sozinha**: as alterações feitas em uma aba só aparecem na outra depois de recarregá-la.
 - O conteúdo dos cartões vem exclusivamente dos resumos e materiais do curso.
 
-## Documentação de testes
+## Documentação
 
-_A preencher durante a execução do exercício._
+- [Documentação do app](documentacao.md): visão geral, regras de negócio e técnicas de teste utilizadas.
+- [Documento de testes](documento-de-testes.md): casos de teste, resultados da execução, evidências e defeitos encontrados, com o status de cada um.
 
-- Condições de teste: _link_
-- Casos de teste: _link_
-- Relatórios de sessão: _link_
-- Defeitos encontrados: _link_
+## Equipe
 
-## Publicar no GitHub Pages (opcional)
+- Danielle Hennings
+- Ana Anzolin
 
-1. Deixe o arquivo na raiz do repositório com o nome `index.html`.
-2. No repositório, vá em **Settings > Pages**.
-3. Em **Branch**, escolha `main` e a pasta raiz.
-4. Salve e aguarde o link ser gerado.
+## Créditos
+
+Os templates de documentação (condições de teste, caso de teste, defeito e relatório de sessão) e as heurísticas de teste (incluindo a ALTR FACE) são baseados no material do curso Modelagem, Documentação e Execução de Testes, de Júlio de Lima ([juliodelima.com.br](https://www.juliodelima.com.br)), usados com a autorização do professor. O HTSM é de James Bach e o artigo sobre Session-Based Test Management é de Jonathan Bach.
+
+
+
